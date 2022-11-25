@@ -31,6 +31,7 @@ class Commands:
     GET_DEVICE_DATA = 0x08
     CONNECT = 0x76
     TEST = 0x01
+    CLEAR = 0x19
 
 class Payloads:
     CONNECTION = bytearray([0x00, 0x00, 0x01, 0x00])
@@ -39,6 +40,7 @@ class Payloads:
 class CRC:
     GET_ALL_USERS = 0xe1a4
     GET_NEW_TRANSACTIONS = 0xe347
+    CLEAR_NEW_TRANSACTIONS = 0x5fab
 
 
 
@@ -135,6 +137,18 @@ class ZKTeco:
         pass
 
     
+    def clear(self, fd, table: dict):
+        payload = bytearray([
+            table['id']
+        ])
+        cmd = Command(self.dev_id, Commands.CLEAR, payload, CRC.CLEAR_NEW_TRANSACTIONS)
+
+        recv_bytes = self.send_recieve(fd, cmd)
+
+        if recv_bytes:
+            return recv_bytes
+        
+        return -1
     
     def get_table(self, fd, table: dict, fieldname: list=None, filter=None, options=None, CRC=None):
         if CRC is None:
@@ -217,5 +231,6 @@ if __name__ == "__main__":
 
     zk.init_connection(skt)
     zk.test_connection(skt)
-    zk.get_table(skt, Tables.USER, CRC=CRC.GET_ALL_USERS)
+    # zk.get_table(skt, Tables.USER, CRC=CRC.GET_ALL_USERS)
     zk.get_table(skt, Tables.TRANSACTION, options=Options.NEWRECORD, CRC=CRC.GET_NEW_TRANSACTIONS)
+    zk.clear(skt, Tables.TRANSACTION)
